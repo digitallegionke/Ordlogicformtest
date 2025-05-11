@@ -48,7 +48,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Sidebar */}
-      <div
+      <aside
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-[#E8E4E0] transform transition-transform duration-200 ease-in-out md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -59,7 +59,7 @@ export default function AdminSidebar() {
             <p className="text-sm text-[#5C6073]">Admin Dashboard</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
               const Icon = item.icon
@@ -91,11 +91,14 @@ export default function AdminSidebar() {
             </Button>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={() => setIsOpen(false)} />
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" 
+          onClick={() => setIsOpen(false)} 
+        />
       )}
     </>
   )
