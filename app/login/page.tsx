@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/client"
@@ -18,22 +18,57 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<string>("")
+
+  useEffect(() => {
+    // Check if Supabase is configured
+    const checkSupabaseConfig = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error("Supabase session error:", error)
+          setDebugInfo("Supabase configuration error: " + error.message)
+        } else if (data.session) {
+          console.log("User already logged in")
+          router.push("/admin")
+        }
+      } catch (error) {
+        console.error("Supabase check error:", error)
+        setDebugInfo("Failed to check Supabase configuration")
+      }
+    }
+    checkSupabaseConfig()
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setDebugInfo("Attempting login...")
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("Login attempt with email:", email)
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      console.log("Login response:", { data, error })
 
+      if (error) {
+        throw error
+      }
+
+      if (!data.session) {
+        throw new Error("No session created")
+      }
+
+      setDebugInfo("Login successful, redirecting...")
       router.push("/admin")
       router.refresh()
     } catch (error: any) {
+      console.error("Login error:", error)
+      setDebugInfo(`Login failed: ${error.message}`)
       toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again.",
@@ -77,6 +112,11 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Logging in..." : "Login"}
             </Button>
+            {debugInfo && (
+              <div className="mt-4 p-2 bg-gray-100 rounded text-sm text-gray-600">
+                {debugInfo}
+              </div>
+            )}
             <div className="text-center text-sm">
               Don't have an account?{" "}
               <Link href="/register" className="text-[#97B980] hover:underline">
