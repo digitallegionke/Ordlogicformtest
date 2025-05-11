@@ -1,23 +1,18 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
+import type { Database } from './database'
 
-export interface Order {
-  id: string
-  created_at: string
-  scheduled_delivery_date: string
-  produce_type: string
-  produce_nature: string
-  expected_quantity: number
-  expected_quality_grade: string
-  dropoff_location: string
-  status: OrderStatus
-  special_notes: string
-  clients: {
+// Get the base delivery schedule type from our database types
+type DeliverySchedule = Database['public']['Tables']['delivery_schedules']['Row']
+type Farmer = Database['public']['Tables']['farmers']['Row']
+
+// Define the Order type which extends DeliverySchedule
+export type Order = DeliverySchedule & {
+  farmers?: Farmer | null
+  clients?: {
     id: string
     name: string
     email: string
-  }
-  farmers: {
-    id: string
-    name: string
-  }
-} 
+  } | null
+}
+
+// Export the status type from our database schema
+export type OrderStatus = DeliverySchedule['status'] 

@@ -23,8 +23,10 @@ type CartStore = CartState & CartActions
 
 type CartPersist = (
   config: StateCreator<CartStore>,
-  options: PersistOptions<CartStore>
+  options: PersistOptions<CartStore, Partial<CartState>>
 ) => StateCreator<CartStore>
+
+type PersistedState = Pick<CartStore, keyof CartState>;
 
 const supabase = createClient()
 
@@ -238,8 +240,7 @@ export const useCart = create<CartStore>()(
     }),
     {
       name: 'cart-storage',
-      // Only persist items and totals
-      partialize: (state: CartStore) => ({
+      partialize: (state) => ({
         items: state.items,
         subtotal: state.subtotal,
         total: state.total,

@@ -19,18 +19,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import type { Database } from "@/types/database"
 
-interface Farmer {
-  id: string
-  name: string
-  phone_number: string
-  created_at: string
+type Farmer = Database["public"]["Tables"]["farmers"]["Row"] & {
   delivery_schedules: Array<{
     id: string
     scheduled_delivery_date: string
     produce_type: string
     expected_quantity: number
-    status: string
+    status: Database["public"]["Tables"]["delivery_schedules"]["Row"]["status"]
   }>
 }
 
@@ -161,6 +158,13 @@ export default function FarmerDetailsPage({ params }: { params: { id: string } }
             <dl className="space-y-4">
               <div className="flex items-center">
                 <dt className="flex items-center text-sm font-medium text-[#5C6073] w-32">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email
+                </dt>
+                <dd className="text-[#2D3047]">{farmer.email}</dd>
+              </div>
+              <div className="flex items-center">
+                <dt className="flex items-center text-sm font-medium text-[#5C6073] w-32">
                   <Phone className="h-4 w-4 mr-2" />
                   Phone
                 </dt>
@@ -187,14 +191,14 @@ export default function FarmerDetailsPage({ params }: { params: { id: string } }
               <div>
                 <dt className="text-sm font-medium text-[#5C6073]">Active Orders</dt>
                 <dd className="text-3xl font-medium text-[#2D3047]">
-                  {farmer.delivery_schedules.filter((order) => order.status !== "delivered" && order.status !== "cancelled").length}
+                  {farmer.delivery_schedules.filter((order) => order.status !== "completed" && order.status !== "cancelled").length}
                 </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-[#5C6073]">Total Quantity Delivered</dt>
                 <dd className="text-3xl font-medium text-[#2D3047]">
                   {farmer.delivery_schedules
-                    .filter((order) => order.status === "delivered")
+                    .filter((order) => order.status === "completed")
                     .reduce((total, order) => total + order.expected_quantity, 0)}
                   kg
                 </dd>

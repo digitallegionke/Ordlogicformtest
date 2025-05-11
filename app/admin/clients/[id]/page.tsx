@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import type { OrderStatus } from "@/types/orders"
 
 interface Client {
   id: string
@@ -32,7 +33,7 @@ interface Client {
     scheduled_delivery_date: string
     produce_type: string
     expected_quantity: number
-    status: string
+    status: OrderStatus
     farmers: {
       name: string
     }
@@ -120,7 +121,7 @@ export default function ClientDetailsPage({ params }: { params: { id: string } }
 
   const calculateTotalSpent = () => {
     return client.delivery_schedules
-      .filter((order) => order.status === "delivered")
+      .filter((order) => order.status === "completed")
       .reduce((total, order) => total + order.expected_quantity * 100, 0) // Assuming $100 per kg
   }
 
@@ -215,7 +216,9 @@ export default function ClientDetailsPage({ params }: { params: { id: string } }
               <div>
                 <dt className="text-sm font-medium text-[#5C6073]">Active Orders</dt>
                 <dd className="text-3xl font-medium text-[#2D3047]">
-                  {client.delivery_schedules.filter((order) => order.status !== "delivered" && order.status !== "cancelled").length}
+                  {client.delivery_schedules.filter((order) => 
+                    order.status !== "completed" && order.status !== "cancelled"
+                  ).length}
                 </dd>
               </div>
               <div>

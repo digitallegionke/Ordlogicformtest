@@ -1,21 +1,44 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import { createBrowserClient } from '@supabase/ssr'
+import type { Database } from '@/types/supabase'
+import { supabaseUrl, supabaseAnonKey } from '@/utils/env'
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+const cookieHandler = {
+  get(name: string) {
+    const cookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(`${name}=`))
+    return cookie ? cookie.split('=')[1] : undefined
+  },
+  set(name: string, value: string, options: any) {
+    let cookie = `${name}=${value}`
+    if (options.maxAge) {
+      cookie += `; Max-Age=${options.maxAge}`
+    }
+    if (options.path) {
+      cookie += `; Path=${options.path}`
+    }
+    if (options.sameSite) {
+      cookie += `; SameSite=${options.sameSite}`
+    }
+    if (options.domain) {
+      cookie += `; Domain=${options.domain}`
+    }
+    if (options.secure) {
+      cookie += '; Secure'
+    }
+    document.cookie = cookie
+  },
+  remove(name: string, options: any) {
+    cookieHandler.set(name, '', { ...options, maxAge: -1 })
+  }
 }
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
-}
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 export const createClient = () => {
-  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  })
+  return createBrowserClient<Database>(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: cookieHandler
+    }
+  )
 }

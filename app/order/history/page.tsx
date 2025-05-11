@@ -7,25 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { Loader2 } from "lucide-react"
 import { getCachedData } from "@/utils/supabase/cache"
-import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js"
+import { PostgrestResponse, PostgrestError } from "@supabase/supabase-js"
 import { Database } from "@/types/database"
 
-interface DeliverySchedule {
-  id: string
-  produce_type: string
-  produce_nature: string
-  expected_quantity: number
-  expected_quality_grade: string
-  dropoff_location: string
-  scheduled_delivery_date: string
-  packaging_type: string | null
-  payment_terms: string | null
-  certifications: string[]
-  delivery_frequency: string | null
-  contract_duration: string | null
-  special_notes: string | null
-  status: "pending" | "assigned" | "in_progress" | "completed" | "cancelled"
-  created_at: string
+type DeliverySchedule = Database["public"]["Tables"]["delivery_schedules"]["Row"] & {
+  certifications?: string[]
+  packaging_type?: string | null
+  payment_terms?: string | null
+  delivery_frequency?: string | null
+  contract_duration?: string | null
 }
 
 export default function OrderHistory() {
@@ -57,32 +47,17 @@ export default function OrderHistory() {
           return
         }
 
-        const query = supabase
+        const { data, error: queryError } = await supabase
           .from("delivery_schedules")
           .select("*")
           .eq("client_id", client.id)
           .order("created_at", { ascending: false })
 
-        const result = await getCachedData<PostgrestResponse<DeliverySchedule[]>>(
-          "client_orders",
-          { client_id: client.id },
-          async () => {
-            const response = await query
-            return {
-              data: response.data as DeliverySchedule[],
-              error: response.error,
-              count: response.count,
-              status: response.status,
-              statusText: response.statusText
-            }
-          }
-        )
-
-        if (result.error) {
-          throw result.error
+        if (queryError) {
+          throw queryError
         }
 
-        setOrders(result.data || [])
+        setOrders(data || [])
       } catch (err) {
         console.error("Error fetching orders:", err)
         setError("Failed to load orders")

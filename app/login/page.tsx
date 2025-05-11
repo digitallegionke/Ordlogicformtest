@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,52 +14,73 @@ import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  
+  const [formState, setFormState] = useState({
+    email: "",
+    password: "",
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [isPageLoading, setIsPageLoading] = useState(true)
-  const [debugInfo, setDebugInfo] = useState<string>("")
 
+  // Check session on mount
   useEffect(() => {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
-          router.push("/admin")
-          return
+          const redirectTo = searchParams.get('redirect') || '/admin'
+          router.push(redirectTo)
+        } else {
+          setIsPageLoading(false)
         }
       } catch (error) {
         console.error("Session check error:", error)
-      } finally {
         setIsPageLoading(false)
       }
     }
     checkSession()
-  }, [router, supabase.auth])
+  }, [router, searchParams, supabase.auth])
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormState(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return
+
     setIsLoading(true)
-    setDebugInfo("Attempting login...")
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formState.email,
+        password: formState.password,
       })
 
-      if (error) throw error
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password')
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please verify your email address before logging in')
+        } else {
+          throw error
+        }
+      }
 
-      setDebugInfo("Login successful, redirecting...")
-      router.push("/admin")
-      router.refresh()
+      const redirectTo = searchParams.get('redirect') || '/admin'
+      router.push(redirectTo)
+      
     } catch (error: any) {
       console.error("Login error:", error)
-      setDebugInfo(`Login failed: ${error.message}`)
       toast({
         title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       })
     } finally {
@@ -91,30 +112,34 @@ export default function LoginPage() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formState.email}
+                onChange={handleInputChange}
                 required
                 disabled={isLoading}
-                className="bg-white"
+                className="bg-white focus:ring-2 focus:ring-[#97B980] focus:border-[#97B980]"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                value={formState.password}
+                onChange={handleInputChange}
                 required
                 disabled={isLoading}
-                className="bg-white"
+                className="bg-white focus:ring-2 focus:ring-[#97B980] focus:border-[#97B980]"
               />
             </div>
             <Button 
               type="submit" 
-              className="w-full relative" 
+              className="w-full relative bg-[#97B980] hover:bg-[#7A9968] transition-colors"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -126,11 +151,6 @@ export default function LoginPage() {
                 "Login"
               )}
             </Button>
-            {debugInfo && (
-              <div className="mt-4 p-2 bg-gray-100 rounded text-sm text-gray-600">
-                {debugInfo}
-              </div>
-            )}
             <div className="text-center text-sm">
               Don't have an account?{" "}
               <Link href="/register" className="text-[#97B980] hover:underline">

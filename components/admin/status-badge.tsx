@@ -1,20 +1,20 @@
 import { Badge } from "@/components/ui/badge"
-import type { OrderStatus } from "@/types/orders"
+import type { DeliveryScheduleStatus } from "@/types/database"
 
 interface StatusBadgeProps {
-  status: OrderStatus
+  status: DeliveryScheduleStatus
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
-  const getStatusColor = (status: OrderStatus) => {
+  const getStatusColor = (status: DeliveryScheduleStatus) => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-      case "confirmed":
+      case "assigned":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100"
-      case "shipped":
+      case "in_progress":
         return "bg-purple-100 text-purple-800 hover:bg-purple-100"
-      case "delivered":
+      case "completed":
         return "bg-green-100 text-green-800 hover:bg-green-100"
       case "cancelled":
         return "bg-red-100 text-red-800 hover:bg-red-100"
@@ -25,7 +25,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <Badge variant="secondary" className={getStatusColor(status)}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
     </Badge>
   )
 }

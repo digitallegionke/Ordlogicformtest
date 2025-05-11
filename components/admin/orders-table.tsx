@@ -159,11 +159,11 @@ export default function OrdersTable({
                       )}
                       {order.status === "confirmed" && (
                         <DropdownMenuItem
-                          onClick={() => handleStatusUpdate(order.id, "shipped")}
+                          onClick={() => handleStatusUpdate(order.id, "in_transit")}
                           className="text-purple-600"
                         >
                           <Truck className="h-4 w-4 mr-2" />
-                          Mark as Shipped
+                          Mark as In Transit
                         </DropdownMenuItem>
                       )}
                       {(order.status === "pending" || order.status === "confirmed") && (

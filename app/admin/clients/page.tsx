@@ -5,6 +5,15 @@ import { Input } from "@/components/ui/input"
 import { Search, Download, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import StatusBadge from "@/components/admin/status-badge"
+import type { Database } from "@/types/database"
+
+type Client = Database["public"]["Tables"]["clients"]["Row"] & {
+  delivery_schedules: Array<{
+    id: string
+    status: string
+    scheduled_delivery_date: string
+  }>
+}
 
 export default async function ClientsPage({
   searchParams,
@@ -44,7 +53,11 @@ export default async function ClientsPage({
   const to = from + itemsPerPage - 1
 
   // Execute query
-  const { data: clients, count } = await query.range(from, to).order("name")
+  const { data: clients, count, error } = await query.range(from, to).order("name")
+
+  if (error) {
+    throw new Error(`Failed to fetch clients: ${error.message}`)
+  }
 
   // Calculate total pages
   const totalPages = count ? Math.ceil(count / itemsPerPage) : 0
@@ -54,13 +67,20 @@ export default async function ClientsPage({
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-serif font-medium text-[#2D3047]">Clients</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
+          <Button asChild variant="outline">
+            <Link href="/admin/clients/export">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Link>
           </Button>
-          <Button variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+          <Button asChild variant="outline">
+            <Link href={`/admin/clients?${new URLSearchParams(searchParams)}`}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Link>
+          </Button>
+          <Button asChild variant="default">
+            <Link href="/admin/clients/new">Add New Client</Link>
           </Button>
         </div>
       </div>
@@ -70,24 +90,25 @@ export default async function ClientsPage({
           <CardTitle>Search Clients</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <form action="/admin/clients" className="flex gap-4">
             <div className="flex-1">
               <Input
+                name="search"
                 placeholder="Search by name or email..."
                 defaultValue={search}
                 className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
               />
             </div>
-            <Button variant="outline">
+            <Button type="submit" variant="outline">
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
 
       <div className="grid gap-6">
-        {clients?.map((client) => (
+        {clients?.map((client: Client) => (
           <Card key={client.id}>
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -165,28 +186,34 @@ export default async function ClientsPage({
             {Math.min(page * itemsPerPage, count || 0)} of {count} clients
           </p>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              disabled={page === 1}
-              onClick={() => {
-                const searchParams = new URLSearchParams(window.location.search)
-                searchParams.set("page", (page - 1).toString())
-                window.location.search = searchParams.toString()
-              }}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              disabled={page === totalPages}
-              onClick={() => {
-                const searchParams = new URLSearchParams(window.location.search)
-                searchParams.set("page", (page + 1).toString())
-                window.location.search = searchParams.toString()
-              }}
-            >
-              Next
-            </Button>
+            {page > 1 && (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/admin/clients?${new URLSearchParams({
+                    ...Object.fromEntries(
+                      Object.entries(searchParams).filter(([key]) => key !== "page")
+                    ),
+                    page: (page - 1).toString(),
+                  })}`}
+                >
+                  Previous
+                </Link>
+              </Button>
+            )}
+            {page < totalPages && (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/admin/clients?${new URLSearchParams({
+                    ...Object.fromEntries(
+                      Object.entries(searchParams).filter(([key]) => key !== "page")
+                    ),
+                    page: (page + 1).toString(),
+                  })}`}
+                >
+                  Next
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       )}

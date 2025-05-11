@@ -10,9 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { v4 as uuidv4 } from "uuid"
-import { useSupabaseClient } from "@supabase/auth-helpers-react"
-import { useRouter } from "next/router"
-import { useSessionContext } from "@supabase/auth-helpers-react"
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
 
 const QualityAssessmentForm = () => {
   const [formData, setFormData] = useState({
@@ -30,10 +29,10 @@ const QualityAssessmentForm = () => {
   const [internalImage, setInternalImage] = useState<File | null>(null)
   const [externalImagePath, setExternalImagePath] = useState<string | null>(null)
   const [internalImagePath, setInternalImagePath] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  const supabase = useSupabaseClient()
+  const supabase = createClient()
   const router = useRouter()
-  const { isLoading } = useSessionContext()
 
   const handleInputChange = (name: string, value: string) => {
     setFormData({

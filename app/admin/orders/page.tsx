@@ -3,10 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter, Download, RefreshCw } from "lucide-react"
+import { Filter, Download, RefreshCw, Package2, ArrowUpDown } from "lucide-react"
 import OrdersTable from "@/components/admin/orders-table"
 import type { Order, OrderStatus } from "@/types/orders"
 import { revalidatePath } from "next/cache"
+import StatusBadge from "@/components/admin/status-badge"
+import Link from "next/link"
+import type { Database } from "@/types/database"
+
+type DeliverySchedule = Database["public"]["Tables"]["delivery_schedules"]["Row"]
 
 // Add refresh action with dynamic revalidation
 async function refresh() {
@@ -59,7 +64,8 @@ export default async function OrdersPage({
         ),
         farmers:farmers(
           id,
-          name
+          name,
+          phone_number
         )
       `,
         { count: "exact" }
@@ -101,7 +107,7 @@ export default async function OrdersPage({
     const orders: Order[] = rawOrders?.map((order: any) => ({
       ...order,
       clients: order.clients?.[0] || { id: '', name: 'Unknown Client', email: '' },
-      farmers: order.farmers?.[0] || { id: '', name: 'Unknown Farmer' },
+      farmers: order.farmers?.[0] || { id: '', name: 'Unknown Farmer', phone_number: '' },
       expected_quantity: Number(order.expected_quantity) || 0,
       status: order.status as OrderStatus
     })) || []
@@ -148,9 +154,9 @@ export default async function OrdersPage({
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="assigned">Assigned</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
@@ -170,6 +176,103 @@ export default async function OrdersPage({
           itemsPerPage={itemsPerPage}
           totalItems={count || 0}
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Total Orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-medium text-[#2D3047]">{orders.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-medium text-[#2D3047]">
+                {orders.filter((order) => order.status === "in_progress" || order.status === "assigned").length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-medium text-[#2D3047]">
+                {orders.filter((order) => order.status === "completed").length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Cancelled Orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-medium text-[#2D3047]">
+                {orders.filter((order) => order.status === "cancelled").length}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#E8E4E0]">
+                    <th className="px-4 py-3 text-left font-medium text-[#5C6073]">Order ID</th>
+                    <th className="px-4 py-3 text-left font-medium text-[#5C6073]">
+                      <div className="flex items-center gap-2">
+                        Date
+                        <ArrowUpDown className="h-4 w-4" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-[#5C6073]">Farmer</th>
+                    <th className="px-4 py-3 text-left font-medium text-[#5C6073]">Produce</th>
+                    <th className="px-4 py-3 text-left font-medium text-[#5C6073]">Quantity</th>
+                    <th className="px-4 py-3 text-left font-medium text-[#5C6073]">Status</th>
+                    <th className="px-4 py-3 text-right font-medium text-[#5C6073]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id} className="border-b border-[#E8E4E0] hover:bg-[#F8F5F2]">
+                      <td className="px-4 py-3 font-medium text-[#2D3047]">{order.id.substring(0, 8)}</td>
+                      <td className="px-4 py-3">
+                        {new Date(order.scheduled_delivery_date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </td>
+                      <td className="px-4 py-3">{order.farmers?.name}</td>
+                      <td className="px-4 py-3">{order.produce_type}</td>
+                      <td className="px-4 py-3">{order.expected_quantity}kg</td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={order.status} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button asChild size="sm" variant="ghost">
+                          <Link href={`/admin/orders/${order.id}`}>View Order</Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   } catch (error: any) {
