@@ -16,16 +16,11 @@ import { useRouter } from "next/navigation"
 interface Client {
   id: string
   name: string
-  email: string
-  phone_number: string
-  created_at: string
 }
 
 interface Farmer {
   id: string
   name: string
-  phone_number: string
-  created_at: string
 }
 
 interface DeliveryScheduleFormProps {
@@ -48,8 +43,6 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
       dropoffLocation: "",
       scheduledDeliveryDate: "",
       specialNotes: "",
-      contactPerson: "",
-      contactPhone: "",
     },
   ])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -67,8 +60,6 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
         dropoffLocation: "",
         scheduledDeliveryDate: "",
         specialNotes: "",
-        contactPerson: "",
-        contactPhone: "",
       },
     ])
   }
@@ -113,29 +104,10 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
           dropoff_location: entry.dropoffLocation,
           scheduled_delivery_date: entry.scheduledDeliveryDate,
           special_notes: entry.specialNotes,
-          contact_person: entry.contactPerson,
-          contact_phone: entry.contactPhone,
           status: "pending",
         })
 
-        if (error) {
-          console.error('Delivery schedule error:', {
-            code: error.code,
-            message: error.message,
-            details: error.details
-          })
-          
-          // Handle specific error cases
-          if (error.code === '23503') {
-            throw new Error("The selected farmer or client no longer exists")
-          } else if (error.code === '23514') {
-            throw new Error("Invalid data provided. Please check all fields.")
-          } else if (error.code === '23505') {
-            throw new Error("A delivery schedule already exists for this combination")
-          } else {
-            throw error
-          }
-        }
+        if (error) throw error
       }
 
       toast({
@@ -156,8 +128,6 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
           dropoffLocation: "",
           scheduledDeliveryDate: "",
           specialNotes: "",
-          contactPerson: "",
-          contactPhone: "",
         },
       ])
 
@@ -280,7 +250,6 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
                           value={entry.expectedQuantity}
                           onChange={(e) => handleEntryChange(entry.id, "expectedQuantity", e.target.value)}
                           className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
-                          placeholder="Enter quantity"
                         />
                       </div>
 
@@ -294,9 +263,28 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
                             <SelectValue placeholder="Select grade" />
                           </SelectTrigger>
                           <SelectContent>
-                            {["A", "B", "C"].map((grade) => (
+                            {["Grade A", "Grade B", "Grade C", "Premium"].map((grade) => (
                               <SelectItem key={grade} value={grade}>
-                                Grade {grade}
+                                {grade}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#5C6073]">Drop-off Location</label>
+                        <Select
+                          value={entry.dropoffLocation}
+                          onValueChange={(value) => handleEntryChange(entry.id, "dropoffLocation", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Warehouse A", "Warehouse B", "Market Center", "Distribution Hub"].map((location) => (
+                              <SelectItem key={location} value={location}>
+                                {location}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -313,70 +301,42 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-[#5C6073]">Contact Person</label>
-                        <Input
-                          type="text"
-                          value={entry.contactPerson}
-                          onChange={(e) => handleEntryChange(entry.id, "contactPerson", e.target.value)}
-                          className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
-                          placeholder="Enter contact name"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-[#5C6073]">Contact Phone</label>
-                        <Input
-                          type="tel"
-                          value={entry.contactPhone}
-                          onChange={(e) => handleEntryChange(entry.id, "contactPhone", e.target.value)}
-                          className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
-                          placeholder="Enter phone number"
-                        />
-                      </div>
-
-                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-sm font-medium text-[#5C6073]">Dropoff Location</label>
-                        <Input
-                          type="text"
-                          value={entry.dropoffLocation}
-                          onChange={(e) => handleEntryChange(entry.id, "dropoffLocation", e.target.value)}
-                          className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
-                          placeholder="Enter delivery address"
-                        />
-                      </div>
-
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-sm font-medium text-[#5C6073]">Special Notes</label>
                         <Textarea
                           value={entry.specialNotes}
                           onChange={(e) => handleEntryChange(entry.id, "specialNotes", e.target.value)}
+                          placeholder="Add any special notes or requirements..."
                           className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
-                          placeholder="Enter any special requirements or notes"
+                          rows={3}
                         />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
+
+              <Button
+                type="button"
+                onClick={handleAddEntry}
+                variant="outline"
+                className="w-full border-dashed border-[#E8E4E0] hover:border-[#97B980] hover:bg-[#F8F5F2] text-[#5C6073]"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Entry
+              </Button>
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleAddEntry}
-              className="w-full border-dashed"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Another Entry
-            </Button>
           </div>
+        </div>
 
-          <div className="flex justify-end gap-4">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Schedule"}
-            </Button>
-          </div>
+        <div className="mt-10 pt-6 border-t border-[#E8E4E0]">
+          <Button
+            type="submit"
+            disabled={isSubmitting || !clientId || entries.some((e) => !e.farmerId)}
+            className="px-8 py-6 bg-[#97B980] hover:bg-[#7A9968] text-white font-medium"
+          >
+            {isSubmitting ? "Scheduling..." : "Schedule Delivery"}
+          </Button>
         </div>
       </form>
     </div>

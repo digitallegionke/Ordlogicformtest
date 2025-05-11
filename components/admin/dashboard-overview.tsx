@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Package, Users, Truck, TrendingUp } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
 
 export default function DashboardOverview() {
   const [stats, setStats] = useState({
@@ -20,39 +19,36 @@ export default function DashboardOverview() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch all delivery schedule counts in one query
-        const { data: orderStats, error: orderError } = await supabase
-          .from('delivery_schedules')
-          .select('status', { count: 'exact' })
-          .in('status', ['pending', 'delivered'])
-          .or('status.eq.pending,status.eq.delivered')
+        // Fetch counts
+        const { count: ordersCount } = await supabase
+          .from("delivery_schedules")
+          .select("*", { count: "exact", head: true })
 
-        if (orderError) throw orderError
+        const { count: clientsCount } = await supabase.from("clients").select("*", { count: "exact", head: true })
 
-        const pendingOrders = orderStats?.filter(o => o.status === 'pending').length || 0
-        const completedOrders = orderStats?.filter(o => o.status === 'delivered').length || 0
-        const ordersCount = orderStats?.length || 0
+        const { count: farmersCount } = await supabase.from("farmers").select("*", { count: "exact", head: true })
 
-        // Fetch other counts
-        const [{ count: clientsCount }, { count: farmersCount }] = await Promise.all([
-          supabase.from("clients").select("*", { count: "exact", head: true }),
-          supabase.from("farmers").select("*", { count: "exact", head: true })
-        ])
+        // Fetch pending orders
+        const { count: pendingOrders } = await supabase
+          .from("delivery_schedules")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending")
+
+        // Fetch completed orders
+        const { count: completedOrders } = await supabase
+          .from("delivery_schedules")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "delivered")
 
         setStats({
-          ordersCount,
+          ordersCount: ordersCount || 0,
           clientsCount: clientsCount || 0,
           farmersCount: farmersCount || 0,
-          pendingOrders,
-          completedOrders,
+          pendingOrders: pendingOrders || 0,
+          completedOrders: completedOrders || 0,
         })
       } catch (error) {
         console.error("Error fetching dashboard stats:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load dashboard statistics",
-          variant: "destructive",
-        })
       } finally {
         setLoading(false)
       }

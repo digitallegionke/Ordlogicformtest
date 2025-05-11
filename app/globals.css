@@ -2,14 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 45, 48, 71;
-  --background-rgb: 248, 245, 242;
-}
-
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
   font-family: Arial, Helvetica, sans-serif;
 }
 
