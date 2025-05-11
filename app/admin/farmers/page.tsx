@@ -53,15 +53,32 @@ export default function FarmersPage() {
       setError(null)
       console.log('Starting farmer fetch...')
       
-      // Build query
+      // First, let's check the table structure
+      const { data: tableInfo, error: tableError } = await supabase
+        .from('farmers')
+        .select()
+        .limit(1)
+
+      if (tableError) {
+        console.error('Table structure check error:', {
+          message: tableError.message,
+          hint: tableError.hint,
+          details: tableError.details,
+          code: tableError.code
+        })
+        throw new Error(`Table check failed: ${tableError.message}`)
+      }
+
+      console.log('Table structure:', tableInfo?.[0] ? Object.keys(tableInfo[0]) : 'No records')
+
+      // Build query without the is_active field for now
       let query = supabase.from("farmers").select(
         `
         id,
         name,
         phone_number,
         created_at,
-        is_active,
-        delivery_schedules!inner (
+        delivery_schedules (
           id,
           status,
           scheduled_delivery_date,
@@ -76,29 +93,16 @@ export default function FarmersPage() {
         query = query.or(`name.ilike.%${search}%`)
       }
 
-      // Filter by active status based on tab
-      if (tab === "active") {
-        query = query.eq("is_active", true)
-      } else if (tab === "inactive") {
-        query = query.eq("is_active", false)
-      }
+      // Temporarily remove active status filtering
+      // if (tab === "active") {
+      //   query = query.eq("is_active", true)
+      // } else if (tab === "inactive") {
+      //   query = query.eq("is_active", false)
+      // }
 
       console.log('Query built, executing...')
 
-      // First, let's try a simple query to check if the table exists
-      const { data: tableCheck, error: tableError } = await supabase
-        .from("farmers")
-        .select("id")
-        .limit(1)
-
-      if (tableError) {
-        console.error('Table check error:', tableError)
-        throw new Error(`Table check failed: ${tableError.message}`)
-      }
-
-      console.log('Table check passed:', tableCheck)
-
-      // Now execute the full query
+      // Execute the query
       const { data, count: totalCount, error } = await query
         .range(from, to)
         .order('created_at', { ascending: false })
@@ -305,7 +309,6 @@ export default function FarmersPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="text-lg font-medium text-[#2D3047]">{farmer.name}</h3>
-                            <StatusBadge status={farmer.is_active ? "active" : "inactive"} />
                           </div>
                           <p className="text-[#5C6073]">{farmer.phone_number}</p>
                         </div>

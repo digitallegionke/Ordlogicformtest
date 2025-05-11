@@ -16,6 +16,9 @@ import { toast } from "@/components/ui/use-toast"
 import { Eye, MoreVertical, CheckCircle, Truck, XCircle } from "lucide-react"
 import StatusBadge from "@/components/admin/status-badge"
 
+// Add type for valid order statuses
+type OrderStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled'
+
 interface Order {
   id: string
   created_at: string
@@ -25,7 +28,7 @@ interface Order {
   expected_quantity: number
   expected_quality_grade: string
   dropoff_location: string
-  status: string
+  status: OrderStatus
   special_notes: string
   clients: {
     id: string
@@ -57,7 +60,7 @@ export default function OrdersTable({
   const supabase = createClient()
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
 
-  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+  const handleStatusUpdate = async (orderId: string, newStatus: OrderStatus) => {
     setIsUpdating(orderId)
 
     try {
@@ -66,18 +69,25 @@ export default function OrdersTable({
         .update({ status: newStatus })
         .eq("id", orderId)
 
-      if (error) throw error
+      if (error) {
+        console.error('Status update error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details
+        })
+        throw error
+      }
 
       toast({
         title: "Status updated",
-        description: `Order status has been updated to ${newStatus}`,
+        description: `Order status has been updated to ${newStatus.replace('_', ' ')}`,
       })
 
       router.refresh()
     } catch (error: any) {
       toast({
         title: "Error updating status",
-        description: error.message,
+        description: error.message || "Failed to update order status",
         variant: "destructive",
       })
     } finally {

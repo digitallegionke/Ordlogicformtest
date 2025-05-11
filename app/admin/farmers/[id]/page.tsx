@@ -23,9 +23,7 @@ import {
 interface Farmer {
   id: string
   name: string
-  email: string
   phone_number: string
-  address: string
   created_at: string
   delivery_schedules: Array<{
     id: string
@@ -163,24 +161,10 @@ export default function FarmerDetailsPage({ params }: { params: { id: string } }
             <dl className="space-y-4">
               <div className="flex items-center">
                 <dt className="flex items-center text-sm font-medium text-[#5C6073] w-32">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Email
-                </dt>
-                <dd className="text-[#2D3047]">{farmer.email}</dd>
-              </div>
-              <div className="flex items-center">
-                <dt className="flex items-center text-sm font-medium text-[#5C6073] w-32">
                   <Phone className="h-4 w-4 mr-2" />
                   Phone
                 </dt>
                 <dd className="text-[#2D3047]">{farmer.phone_number}</dd>
-              </div>
-              <div className="flex items-center">
-                <dt className="flex items-center text-sm font-medium text-[#5C6073] w-32">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Address
-                </dt>
-                <dd className="text-[#2D3047]">{farmer.address}</dd>
               </div>
               <div className="flex items-center">
                 <dt className="text-sm font-medium text-[#5C6073] w-32">Member Since</dt>

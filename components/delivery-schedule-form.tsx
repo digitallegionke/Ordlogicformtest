@@ -113,7 +113,24 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
           status: "pending",
         })
 
-        if (error) throw error
+        if (error) {
+          console.error('Delivery schedule error:', {
+            code: error.code,
+            message: error.message,
+            details: error.details
+          })
+          
+          // Handle specific error cases
+          if (error.code === '23503') {
+            throw new Error("The selected farmer or client no longer exists")
+          } else if (error.code === '23514') {
+            throw new Error("Invalid data provided. Please check all fields.")
+          } else if (error.code === '23505') {
+            throw new Error("A delivery schedule already exists for this combination")
+          } else {
+            throw error
+          }
+        }
       }
 
       toast({
