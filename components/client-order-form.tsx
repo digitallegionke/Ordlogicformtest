@@ -23,6 +23,15 @@ interface OrderEntry {
   dropoffLocation: string
   scheduledDeliveryDate: string
   specialNotes: string
+  packagingType: string
+  storageRequirements: string
+  transportationMode: string
+  pricePerUnit: string
+  paymentTerms: string
+  certifications: string
+  inspectionRequirements: string
+  deliveryFrequency: string
+  contractDuration: string
 }
 
 interface ClientOrderFormProps {
@@ -52,6 +61,15 @@ export default function ClientOrderForm({
       dropoffLocation: "",
       scheduledDeliveryDate: "",
       specialNotes: "",
+      packagingType: "",
+      storageRequirements: "",
+      transportationMode: "",
+      pricePerUnit: "",
+      paymentTerms: "",
+      certifications: "",
+      inspectionRequirements: "",
+      deliveryFrequency: "",
+      contractDuration: "",
     },
   ])
 
@@ -72,6 +90,15 @@ export default function ClientOrderForm({
         dropoffLocation: "",
         scheduledDeliveryDate: "",
         specialNotes: "",
+        packagingType: "",
+        storageRequirements: "",
+        transportationMode: "",
+        pricePerUnit: "",
+        paymentTerms: "",
+        certifications: "",
+        inspectionRequirements: "",
+        deliveryFrequency: "",
+        contractDuration: "",
       },
     ])
   }
@@ -154,6 +181,15 @@ export default function ClientOrderForm({
           dropoff_location: entry.dropoffLocation,
           scheduled_delivery_date: entry.scheduledDeliveryDate,
           special_notes: entry.specialNotes,
+          packaging_type: entry.packagingType,
+          storage_requirements: entry.storageRequirements,
+          transportation_mode: entry.transportationMode,
+          price_per_unit: entry.pricePerUnit ? Number.parseFloat(entry.pricePerUnit) : null,
+          payment_terms: entry.paymentTerms,
+          certifications: entry.certifications,
+          inspection_requirements: entry.inspectionRequirements,
+          delivery_frequency: entry.deliveryFrequency,
+          contract_duration: entry.contractDuration,
           status: "pending",
         })
       }
@@ -180,6 +216,15 @@ export default function ClientOrderForm({
           dropoffLocation: "",
           scheduledDeliveryDate: "",
           specialNotes: "",
+          packagingType: "",
+          storageRequirements: "",
+          transportationMode: "",
+          pricePerUnit: "",
+          paymentTerms: "",
+          certifications: "",
+          inspectionRequirements: "",
+          deliveryFrequency: "",
+          contractDuration: "",
         },
       ])
     } catch (error: any) {
@@ -196,8 +241,8 @@ export default function ClientOrderForm({
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="p-8 border-b border-[#E8E4E0]">
-        <h2 className="text-2xl font-serif font-medium text-[#2D3047] mb-2">Client Order Form</h2>
-        <p className="text-[#5C6073]">Place your produce orders with detailed specifications for each item.</p>
+        <h2 className="text-2xl font-serif font-medium text-[#2D3047] mb-2">Schedule Delivery</h2>
+        <p className="text-[#5C6073]">Schedule your produce delivery with detailed specifications.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="p-8">
@@ -248,32 +293,31 @@ export default function ClientOrderForm({
 
           {/* Order Entries */}
           <div className="space-y-4">
-            <h3 className="text-xl font-serif font-medium text-[#2D3047]">Order Details</h3>
-            <p className="text-[#5C6073] mb-4">Add one or more produce items for delivery.</p>
+            <h3 className="text-xl font-serif font-medium text-[#2D3047]">Delivery Details</h3>
+            <p className="text-[#5C6073] mb-4">Add one or more items to your delivery schedule.</p>
 
             <div className="space-y-6">
               {entries.map((entry, index) => (
                 <Card key={entry.id} className="border-[#E8E4E0] overflow-hidden">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                      <h4 className="text-lg font-medium text-[#2D3047]">Order {index + 1}</h4>
+                      <h4 className="text-lg font-medium text-[#2D3047]">Entry {index + 1}</h4>
                       {entries.length > 1 && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveEntry(entry.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remove
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Farmer</Label>
+                        <Label>Farmer</Label>
                         <Select
                           value={entry.farmerId}
                           onValueChange={(value) => handleEntryChange(entry.id, "farmerId", value)}
@@ -292,7 +336,7 @@ export default function ClientOrderForm({
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Produce Type</Label>
+                        <Label>Produce Type</Label>
                         <Select
                           value={entry.produceType}
                           onValueChange={(value) => handleEntryChange(entry.id, "produceType", value)}
@@ -311,7 +355,7 @@ export default function ClientOrderForm({
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Produce Nature</Label>
+                        <Label>Produce Nature</Label>
                         <Select
                           value={entry.produceNature}
                           onValueChange={(value) => handleEntryChange(entry.id, "produceNature", value)}
@@ -330,17 +374,18 @@ export default function ClientOrderForm({
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Expected Quantity (kg)</Label>
+                        <Label>Expected Quantity (kg)</Label>
                         <Input
                           type="number"
                           value={entry.expectedQuantity}
                           onChange={(e) => handleEntryChange(entry.id, "expectedQuantity", e.target.value)}
                           className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
+                          placeholder="Enter quantity"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Expected Quality Grade</Label>
+                        <Label>Expected Quality Grade</Label>
                         <Select
                           value={entry.expectedQualityGrade}
                           onValueChange={(value) => handleEntryChange(entry.id, "expectedQualityGrade", value)}
@@ -349,9 +394,9 @@ export default function ClientOrderForm({
                             <SelectValue placeholder="Select grade" />
                           </SelectTrigger>
                           <SelectContent>
-                            {["Grade A", "Grade B", "Grade C", "Premium"].map((grade) => (
+                            {["A", "B", "C"].map((grade) => (
                               <SelectItem key={grade} value={grade}>
-                                {grade}
+                                Grade {grade}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -359,7 +404,7 @@ export default function ClientOrderForm({
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Drop-off Location</Label>
+                        <Label>Drop-off Location</Label>
                         <Select
                           value={entry.dropoffLocation}
                           onValueChange={(value) => handleEntryChange(entry.id, "dropoffLocation", value)}
@@ -378,7 +423,7 @@ export default function ClientOrderForm({
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Scheduled Delivery Date</Label>
+                        <Label>Scheduled Delivery Date</Label>
                         <Input
                           type="date"
                           value={entry.scheduledDeliveryDate}
@@ -388,41 +433,183 @@ export default function ClientOrderForm({
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
-                        <Label className="text-sm font-medium text-[#5C6073]">Special Notes</Label>
+                        <Label>Special Notes</Label>
                         <Textarea
                           value={entry.specialNotes}
                           onChange={(e) => handleEntryChange(entry.id, "specialNotes", e.target.value)}
-                          placeholder="Add any special notes or requirements..."
                           className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
-                          rows={3}
+                          placeholder="Enter any special requirements or notes"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Packaging Type</Label>
+                        <Select
+                          value={entry.packagingType}
+                          onValueChange={(value) => handleEntryChange(entry.id, "packagingType", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select packaging" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Crates", "Boxes", "Bags", "Bulk", "Custom"].map((type) => (
+                              <SelectItem key={type} value={type.toLowerCase()}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Storage Requirements</Label>
+                        <Select
+                          value={entry.storageRequirements}
+                          onValueChange={(value) => handleEntryChange(entry.id, "storageRequirements", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select storage type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Cold Storage", "Room Temperature", "Refrigerated", "Frozen"].map((type) => (
+                              <SelectItem key={type} value={type.toLowerCase()}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Transportation Mode</Label>
+                        <Select
+                          value={entry.transportationMode}
+                          onValueChange={(value) => handleEntryChange(entry.id, "transportationMode", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select transport" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Refrigerated Truck", "Regular Truck", "Van", "Third Party"].map((mode) => (
+                              <SelectItem key={mode} value={mode.toLowerCase()}>
+                                {mode}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Price per Unit (USD)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={entry.pricePerUnit}
+                          onChange={(e) => handleEntryChange(entry.id, "pricePerUnit", e.target.value)}
+                          className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
+                          placeholder="Enter price per kg"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Payment Terms</Label>
+                        <Select
+                          value={entry.paymentTerms}
+                          onValueChange={(value) => handleEntryChange(entry.id, "paymentTerms", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select terms" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Net 30", "Net 60", "COD", "Advance Payment"].map((terms) => (
+                              <SelectItem key={terms} value={terms.toLowerCase()}>
+                                {terms}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Certifications Required</Label>
+                        <Input
+                          type="text"
+                          value={entry.certifications}
+                          onChange={(e) => handleEntryChange(entry.id, "certifications", e.target.value)}
+                          className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
+                          placeholder="e.g. Organic, GAP, etc."
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Inspection Requirements</Label>
+                        <Textarea
+                          value={entry.inspectionRequirements}
+                          onChange={(e) => handleEntryChange(entry.id, "inspectionRequirements", e.target.value)}
+                          className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
+                          placeholder="Enter inspection details"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Delivery Frequency</Label>
+                        <Select
+                          value={entry.deliveryFrequency}
+                          onValueChange={(value) => handleEntryChange(entry.id, "deliveryFrequency", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["One-time", "Weekly", "Bi-weekly", "Monthly"].map((freq) => (
+                              <SelectItem key={freq} value={freq.toLowerCase()}>
+                                {freq}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Contract Duration</Label>
+                        <Select
+                          value={entry.contractDuration}
+                          onValueChange={(value) => handleEntryChange(entry.id, "contractDuration", value)}
+                        >
+                          <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                            <SelectValue placeholder="Select duration" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["One-time", "3 months", "6 months", "1 year"].map((duration) => (
+                              <SelectItem key={duration} value={duration.toLowerCase()}>
+                                {duration}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-
-              <Button
-                type="button"
-                onClick={handleAddEntry}
-                variant="outline"
-                className="w-full border-dashed border-[#E8E4E0] hover:border-[#97B980] hover:bg-[#F8F5F2] text-[#5C6073]"
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Another Order
-              </Button>
             </div>
-          </div>
-        </div>
 
-        <div className="mt-10 pt-6 border-t border-[#E8E4E0]">
-          <Button
-            type="submit"
-            disabled={isSubmitting || !clientInfo.name || !clientInfo.email || entries.length === 0}
-            className="px-8 py-6 bg-[#97B980] hover:bg-[#7A9968] text-white font-medium"
-          >
-            {isSubmitting ? "Submitting..." : "Submit Orders"}
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAddEntry}
+              className="w-full border-dashed"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Another Entry
+            </Button>
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Schedule"}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

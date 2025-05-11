@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 
@@ -20,6 +21,7 @@ export default function NewFarmerPage() {
     email: "",
     phone_number: "",
     address: "",
+    is_active: true
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,16 +40,22 @@ export default function NewFarmerPage() {
         throw new Error("Please enter a valid email address")
       }
 
-      const { error } = await supabase.from("farmers").insert([
+      const { data, error } = await supabase.from("farmers").insert([
         {
           name: formData.name,
           email: formData.email,
           phone_number: formData.phone_number,
           address: formData.address,
+          is_active: formData.is_active
         },
-      ])
+      ]).select()
 
-      if (error) throw error
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error("A farmer with this email already exists")
+        }
+        throw new Error(error.message || "Failed to add farmer")
+      }
 
       toast({
         title: "Success",
@@ -70,6 +78,10 @@ export default function NewFarmerPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSwitchChange = (checked: boolean) => {
+    setFormData((prev) => ({ ...prev, is_active: checked }))
   }
 
   return (
@@ -140,6 +152,15 @@ export default function NewFarmerPage() {
                 placeholder="Enter farmer's address"
                 className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
               />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_active"
+                checked={formData.is_active}
+                onCheckedChange={handleSwitchChange}
+              />
+              <Label htmlFor="is_active">Active Status</Label>
             </div>
 
             <div className="flex justify-end gap-4">
