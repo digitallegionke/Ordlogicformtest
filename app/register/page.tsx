@@ -19,11 +19,14 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<string>("")
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    setDebugInfo("Starting registration process...")
 
     if (password !== confirmPassword) {
+      setDebugInfo("Password mismatch")
       toast({
         title: "Passwords do not match",
         description: "Please make sure your passwords match.",
@@ -32,26 +35,60 @@ export default function RegisterPage() {
       return
     }
 
+    if (password.length < 6) {
+      setDebugInfo("Password too short")
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      setDebugInfo("Sending registration request to Supabase...")
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/login`,
-        },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            role: 'admin'
+          }
+        }
       })
 
-      if (error) throw error
+      console.log("Registration response:", { data, error })
 
+      if (error) {
+        throw error
+      }
+
+      if (data?.user?.identities?.length === 0) {
+        setDebugInfo("Email already registered")
+        toast({
+          title: "Email already registered",
+          description: "Please try logging in instead.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setDebugInfo("Registration successful! Please check your email.")
       toast({
         title: "Registration successful",
-        description: "Please check your email to confirm your account.",
+        description: "Please check your email to confirm your account. Check your spam folder if you don't see it.",
       })
 
-      router.push("/login")
+      // Wait for 5 seconds before redirecting to login
+      setTimeout(() => {
+        router.push("/login")
+      }, 5000)
     } catch (error: any) {
+      console.error("Registration error:", error)
+      setDebugInfo(`Registration failed: ${error.message}`)
       toast({
         title: "Registration failed",
         description: error.message || "Please check your details and try again.",
@@ -90,6 +127,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <div className="space-y-2">
@@ -100,11 +138,17 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Registering..." : "Register"}
             </Button>
+            {debugInfo && (
+              <div className="mt-4 p-2 bg-gray-100 rounded text-sm text-gray-600">
+                {debugInfo}
+              </div>
+            )}
             <div className="text-center text-sm">
               Already have an account?{" "}
               <Link href="/login" className="text-[#97B980] hover:underline">

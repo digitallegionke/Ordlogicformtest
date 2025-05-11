@@ -40,6 +40,15 @@ const nextConfig = {
   },
   // Optimize production builds
   productionBrowserSourceMaps: false,
+  async redirects() {
+    return [
+      {
+        source: '/auth/callback',
+        destination: '/auth/callback',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig
