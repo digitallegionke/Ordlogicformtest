@@ -59,7 +59,10 @@ export default function OrdersTable({
         description: `Order status has been updated to ${newStatus.replace('_', ' ')}`,
       })
 
-      router.refresh()
+      // Single refresh call with a small delay to ensure the update is processed
+      setTimeout(() => {
+        router.refresh()
+      }, 100)
     } catch (error: any) {
       toast({
         title: "Error updating status",

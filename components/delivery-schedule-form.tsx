@@ -16,11 +16,16 @@ import { useRouter } from "next/navigation"
 interface Client {
   id: string
   name: string
+  email: string
+  phone_number: string
+  created_at: string
 }
 
 interface Farmer {
   id: string
   name: string
+  phone_number: string
+  created_at: string
 }
 
 interface DeliveryScheduleFormProps {

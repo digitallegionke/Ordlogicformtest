@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-schema": "tsx scripts/update-schema.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -61,7 +62,8 @@
     "tailwind-merge": "^2.5.5",
     "uuid": "latest",
     "vaul": "^0.9.6",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@types/node": "^22",
@@ -70,6 +72,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   },
   "main": "index.js",
