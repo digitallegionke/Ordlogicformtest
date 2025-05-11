@@ -5,28 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Filter, Download, RefreshCw } from "lucide-react"
 import OrdersTable from "@/components/admin/orders-table"
-
-interface Order {
-  id: string
-  created_at: string
-  scheduled_delivery_date: string
-  produce_type: string
-  produce_nature: string
-  expected_quantity: number
-  expected_quality_grade: string
-  dropoff_location: string
-  status: string
-  special_notes: string
-  clients: {
-    id: string
-    name: string
-    email: string
-  }
-  farmers: {
-    id: string
-    name: string
-  }
-}
+import type { Order, OrderStatus } from "@/types/orders"
 
 export default async function OrdersPage({
   searchParams,
@@ -97,7 +76,8 @@ export default async function OrdersPage({
     ...order,
     clients: order.clients[0] || { id: '', name: '', email: '' },
     farmers: order.farmers[0] || { id: '', name: '' },
-    expected_quantity: Number(order.expected_quantity)
+    expected_quantity: Number(order.expected_quantity),
+    status: order.status as OrderStatus // Type assertion to ensure status is of type OrderStatus
   })) || []
 
   // Calculate total pages

@@ -15,31 +15,7 @@ import {
 import { toast } from "@/components/ui/use-toast"
 import { Eye, MoreVertical, CheckCircle, Truck, XCircle } from "lucide-react"
 import StatusBadge from "@/components/admin/status-badge"
-
-// Add type for valid order statuses
-type OrderStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled'
-
-interface Order {
-  id: string
-  created_at: string
-  scheduled_delivery_date: string
-  produce_type: string
-  produce_nature: string
-  expected_quantity: number
-  expected_quality_grade: string
-  dropoff_location: string
-  status: OrderStatus
-  special_notes: string
-  clients: {
-    id: string
-    name: string
-    email: string
-  }
-  farmers: {
-    id: string
-    name: string
-  }
-}
+import type { Order, OrderStatus } from "@/types/orders"
 
 interface OrdersTableProps {
   orders: Order[]
