@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ClipboardList, LayoutDashboard, ShoppingCart } from "lucide-react"
+import { ClipboardList, LayoutDashboard, ShoppingCart, PackageCheck } from "lucide-react"
 
 export default function Home() {
   return (
@@ -21,6 +21,13 @@ export default function Home() {
             <Link href="/form">
               <ClipboardList className="mr-2 h-4 w-4" />
               Schedule Delivery
+            </Link>
+          </Button>
+
+          <Button asChild className="bg-[#97B980] hover:bg-[#7A9968] text-white">
+            <Link href="/receiving/dashboard">
+              <PackageCheck className="mr-2 h-4 w-4" />
+              Receive Order
             </Link>
           </Button>
 
