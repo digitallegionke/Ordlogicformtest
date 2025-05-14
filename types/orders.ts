@@ -12,7 +12,8 @@ export type Order = DeliverySchedule & {
     name: string
     email: string
   } | null
+  produce: Database['public']['Tables']['produce']['Row'] | null
 }
 
 // Export the status type from our database schema
-export type OrderStatus = DeliverySchedule['status'] 
+export type OrderStatus = 'pending' | 'confirmed' | 'in_transit' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' 

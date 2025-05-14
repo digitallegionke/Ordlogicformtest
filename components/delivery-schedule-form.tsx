@@ -2,7 +2,7 @@
 
 import type React from "react"
 import type { Database } from "@/types/supabase"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,12 +17,13 @@ import OrderStatusModal from "@/components/ui/order-status-modal"
 type Tables = Database['public']['Tables']
 type ClientRow = Tables['clients']['Row']
 type FarmerRow = Tables['farmers']['Row']
+type ProduceRow = Tables['produce']['Row']
 type DeliveryScheduleInsert = Tables['delivery_schedules']['Insert']
 
 interface DeliveryEntry {
   id: number
   farmerId: string
-  produceType: string
+  produceId: string
   produceNature: string
   expectedQuantity: number
   expectedQualityGrade: string
@@ -42,10 +43,11 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
   const router = useRouter()
   const supabase = createClient()
   const [clientId, setClientId] = useState<string>("")
+  const [produceItems, setProduceItems] = useState<ProduceRow[]>([])
   const [entries, setEntries] = useState<DeliveryEntry[]>([{
     id: 1,
     farmerId: "",
-    produceType: "",
+    produceId: "",
     produceNature: "",
     expectedQuantity: 0,
     expectedQualityGrade: "",
@@ -68,13 +70,44 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
     message: "",
   })
 
+  // Fetch produce items on component mount
+  useEffect(() => {
+    const fetchProduceItems = async () => {
+      console.log("Fetching produce items...")
+      const { data, error } = await supabase
+        .from("produce")
+        .select("*")
+        .eq("status", "active")
+        .order("name")
+
+      if (error) {
+        console.error("Error fetching produce items:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load produce items. Please refresh the page.",
+          variant: "destructive",
+        })
+      } else if (data) {
+        console.log("Fetched produce items:", data)
+        setProduceItems(data)
+      }
+    }
+
+    fetchProduceItems()
+  }, [])
+
+  // Add debug log for produce items state
+  useEffect(() => {
+    console.log("Current produce items state:", produceItems)
+  }, [produceItems])
+
   const handleAddEntry = () => {
     setEntries([
       ...entries,
       {
         id: entries.length + 1,
         farmerId: "",
-        produceType: "",
+        produceId: "",
         produceNature: "",
         expectedQuantity: 0,
         expectedQualityGrade: "",
@@ -108,7 +141,7 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
       const missingFields: string[] = []
       entries.forEach((entry, index) => {
         if (!entry.farmerId) missingFields.push(`Entry ${index + 1}: Farmer`)
-        if (!entry.produceType) missingFields.push(`Entry ${index + 1}: Produce Type`)
+        if (!entry.produceId) missingFields.push(`Entry ${index + 1}: Produce`)
         if (!entry.expectedQuantity) missingFields.push(`Entry ${index + 1}: Expected Quantity`)
         if (!entry.scheduledDeliveryDate) missingFields.push(`Entry ${index + 1}: Scheduled Delivery Date`)
       })
@@ -118,21 +151,25 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
       }
 
       const schedules: DeliveryScheduleInsert[] = entries
-        .filter(entry => entry.farmerId && entry.produceType && entry.expectedQuantity && entry.scheduledDeliveryDate)
-        .map(entry => ({
-          client_id: clientId,
-          farmer_id: entry.farmerId,
-          produce_type: entry.produceType,
-          produce_nature: entry.produceNature,
-          expected_quantity: entry.expectedQuantity,
-          expected_quality_grade: entry.expectedQualityGrade,
-          dropoff_location: entry.dropoffLocation,
-          scheduled_delivery_date: entry.scheduledDeliveryDate,
-          special_notes: entry.specialNotes,
-          contact_person: entry.contactPerson,
-          contact_phone: entry.contactPhone,
-          status: "pending"
-        }))
+        .filter(entry => entry.farmerId && entry.produceId && entry.expectedQuantity && entry.scheduledDeliveryDate)
+        .map(entry => {
+          const selectedProduce = produceItems.find(p => p.id === entry.produceId)
+          return {
+            client_id: clientId,
+            farmer_id: entry.farmerId,
+            produce_id: entry.produceId,
+            produce_type: selectedProduce?.name || "",
+            produce_nature: entry.produceNature,
+            expected_quantity: entry.expectedQuantity,
+            expected_quality_grade: entry.expectedQualityGrade,
+            dropoff_location: entry.dropoffLocation,
+            scheduled_delivery_date: entry.scheduledDeliveryDate,
+            special_notes: entry.specialNotes,
+            contact_person: entry.contactPerson,
+            contact_phone: entry.contactPhone,
+            status: "pending"
+          }
+        })
 
       if (schedules.length > 0) {
         const { error: schedulesError } = await supabase
@@ -161,7 +198,7 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
       setEntries([{
         id: 1,
         farmerId: "",
-        produceType: "",
+        produceId: "",
         produceNature: "",
         expectedQuantity: 0,
         expectedQualityGrade: "",
@@ -256,20 +293,30 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-[#5C6073]">Produce Type</label>
+                          <label className="text-sm font-medium text-[#5C6073]">Produce</label>
                           <Select
-                            value={entry.produceType}
-                            onValueChange={(value) => handleEntryChange(entry.id, "produceType", value)}
+                            value={entry.produceId}
+                            onValueChange={(value) => {
+                              console.log("Selected produce value:", value)
+                              handleEntryChange(entry.id, "produceId", value)
+                            }}
                           >
                             <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder="Select produce" />
                             </SelectTrigger>
                             <SelectContent>
-                              {["potato", "tomato", "carrot", "lettuce", "cucumber", "onion"].map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                                </SelectItem>
-                              ))}
+                              {produceItems.length === 0 ? (
+                                <SelectItem value="" disabled>No produce items available</SelectItem>
+                              ) : (
+                                produceItems.map((item) => {
+                                  console.log("Rendering produce item:", item)
+                                  return (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.name} ({item.unit})
+                                    </SelectItem>
+                                  )
+                                })
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -294,7 +341,7 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-[#5C6073]">Expected Quantity (kg)</label>
+                          <label className="text-sm font-medium text-[#5C6073]">Expected Quantity</label>
                           <Input
                             type="number"
                             value={entry.expectedQuantity}
@@ -302,6 +349,11 @@ export default function DeliveryScheduleForm({ clients, farmers }: DeliverySched
                             className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]"
                             placeholder="Enter quantity"
                           />
+                          {entry.produceId && (
+                            <span className="text-sm text-[#5C6073]">
+                              Unit: {produceItems.find(p => p.id === entry.produceId)?.unit || 'kg'}
+                            </span>
+                          )}
                         </div>
 
                         <div className="space-y-2">

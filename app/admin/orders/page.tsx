@@ -9,7 +9,7 @@ import type { Order, OrderStatus } from "@/types/orders"
 import { revalidatePath } from "next/cache"
 import StatusBadge from "@/components/admin/status-badge"
 import Link from "next/link"
-import type { Database } from "@/types/database"
+import type { Database, Produce } from "@/types/database"
 
 type DeliverySchedule = Database["public"]["Tables"]["delivery_schedules"]["Row"]
 
@@ -35,6 +35,18 @@ export default async function OrdersPage({
   const supabase = createClient()
 
   try {
+    // Fetch all active produce types
+    const { data: produceTypes, error: produceError } = await supabase
+      .from('produce')
+      .select('*')
+      .eq('status', 'active')
+      .order('name')
+
+    if (produceError) {
+      console.error('Error fetching produce types:', produceError)
+      throw new Error('Failed to fetch produce types')
+    }
+
     // Parse query parameters
     const page = typeof searchParams.page === "string" ? parseInt(searchParams.page) : 1
     const status = typeof searchParams.status === "string" ? searchParams.status : undefined
@@ -50,9 +62,12 @@ export default async function OrdersPage({
         id,
         created_at,
         scheduled_delivery_date,
+        produce_id,
+        produce:produce(*),
         produce_type,
         produce_nature,
         expected_quantity,
+        unit,
         expected_quality_grade,
         dropoff_location,
         status,
@@ -78,12 +93,13 @@ export default async function OrdersPage({
 
     if (search) {
       query = query.or(
-        `produce_type.ilike.%${search}%,clients.name.ilike.%${search}%,farmers.name.ilike.%${search}%`
+        `produce.name.ilike.%${search}%,clients.name.ilike.%${search}%,farmers.name.ilike.%${search}%`
       )
     }
 
     // Apply sorting with nulls last
-    query = query.order(sortBy, { ascending: sortOrder === "asc", nullsFirst: false })
+    const isAscending = sortOrder === "asc"
+    query = query.order(sortBy, { ascending: isAscending, nullsFirst: false })
 
     // Apply pagination
     const itemsPerPage = 10
@@ -91,23 +107,24 @@ export default async function OrdersPage({
     const to = from + itemsPerPage - 1
 
     // Execute query with error handling
-    const { data: rawOrders, count, error } = await query.range(from, to)
+    const { data, count, error: queryError } = await query.range(from, to)
 
-    if (error) {
+    if (queryError) {
       console.error('Supabase query error:', {
-        message: error.message,
-        hint: error.hint,
-        details: error.details,
-        code: error.code
+        message: queryError.message,
+        hint: queryError.hint,
+        details: queryError.details,
+        code: queryError.code
       })
       throw new Error('Failed to fetch orders')
     }
 
     // Transform the data to match the Order interface
-    const orders: Order[] = rawOrders?.map((order: any) => ({
+    const orders: Order[] = data?.map((order: any) => ({
       ...order,
       clients: order.clients?.[0] || { id: '', name: 'Unknown Client', email: '' },
       farmers: order.farmers?.[0] || { id: '', name: 'Unknown Farmer', phone_number: '' },
+      produce: order.produce || null,
       expected_quantity: Number(order.expected_quantity) || 0,
       status: order.status as OrderStatus
     })) || []
@@ -161,6 +178,21 @@ export default async function OrdersPage({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="w-full md:w-48">
+                <Select defaultValue={searchParams.produce_id as string || "all"}>
+                  <SelectTrigger className="border-[#E8E4E0] focus:ring-[#97B980] focus:border-[#97B980]">
+                    <SelectValue placeholder="Filter by produce" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Produce</SelectItem>
+                    {produceTypes?.map((produce: Produce) => (
+                      <SelectItem key={produce.id} value={produce.id}>
+                        {produce.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button variant="outline" className="md:w-auto">
                 <Filter className="h-4 w-4 mr-2" />
                 Apply Filters
@@ -200,22 +232,22 @@ export default async function OrdersPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Completed Orders</CardTitle>
+              <CardTitle>Pending Orders</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-medium text-[#2D3047]">
-                {orders.filter((order) => order.status === "completed").length}
+                {orders.filter((order) => order.status === "pending").length}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Cancelled Orders</CardTitle>
+              <CardTitle>Completed Orders</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-medium text-[#2D3047]">
-                {orders.filter((order) => order.status === "cancelled").length}
+                {orders.filter((order) => order.status === "completed").length}
               </div>
             </CardContent>
           </Card>
@@ -256,8 +288,15 @@ export default async function OrdersPage({
                         })}
                       </td>
                       <td className="px-4 py-3">{order.farmers?.name}</td>
-                      <td className="px-4 py-3">{order.produce_type}</td>
-                      <td className="px-4 py-3">{order.expected_quantity}kg</td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <div className="font-medium text-[#2D3047]">{order.produce?.name || 'Unknown'}</div>
+                          <div className="text-xs text-[#5C6073]">
+                            {order.produce_nature}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">{order.expected_quantity} {order.unit}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={order.status} />
                       </td>

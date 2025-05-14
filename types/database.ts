@@ -38,17 +38,51 @@ export interface Database {
           status?: string
         }
       }
+      produce: {
+        Row: {
+          id: string
+          created_at: string
+          name: string
+          category: string
+          unit: string
+          description: string | null
+          image_url: string | null
+          status: 'active' | 'inactive'
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          name: string
+          category: string
+          unit?: string
+          description?: string | null
+          image_url?: string | null
+          status?: 'active' | 'inactive'
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          name?: string
+          category?: string
+          unit?: string
+          description?: string | null
+          image_url?: string | null
+          status?: 'active' | 'inactive'
+        }
+      }
       delivery_schedules: {
         Row: {
           id: string
           created_at: string
           scheduled_delivery_date: string
+          produce_id: string
           produce_type: string
           produce_nature: string
           expected_quantity: number
+          unit: string
           expected_quality_grade: string
           dropoff_location: string
-          status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
+          status: 'pending' | 'confirmed' | 'in_transit' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
           special_notes: string | null
           farmer_id: string
         }
@@ -56,12 +90,14 @@ export interface Database {
           id?: string
           created_at?: string
           scheduled_delivery_date: string
+          produce_id: string
           produce_type: string
           produce_nature: string
           expected_quantity: number
+          unit?: string
           expected_quality_grade: string
           dropoff_location: string
-          status?: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
+          status?: 'pending' | 'confirmed' | 'in_transit' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
           special_notes?: string | null
           farmer_id: string
         }
@@ -69,12 +105,14 @@ export interface Database {
           id?: string
           created_at?: string
           scheduled_delivery_date?: string
+          produce_id?: string
           produce_type?: string
           produce_nature?: string
           expected_quantity?: number
+          unit?: string
           expected_quality_grade?: string
           dropoff_location?: string
-          status?: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
+          status?: 'pending' | 'confirmed' | 'in_transit' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
           special_notes?: string | null
           farmer_id?: string
         }
@@ -144,3 +182,4 @@ export interface Database {
 // Export commonly used types
 export type Product = Database['public']['Tables']['products']['Row']
 export type CartItem = Database['public']['Tables']['cart_items']['Row']
+export type Produce = Database['public']['Tables']['produce']['Row']

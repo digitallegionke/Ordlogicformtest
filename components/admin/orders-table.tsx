@@ -111,16 +111,16 @@ export default function OrdersTable({
                 <td className="px-4 py-3 font-medium text-[#2D3047]">{order.id.substring(0, 8)}</td>
                 <td className="px-4 py-3">
                   <div>
-                    <div className="font-medium text-[#2D3047]">{order.clients.name}</div>
-                    <div className="text-xs text-[#5C6073]">{order.clients.email}</div>
+                    <div className="font-medium text-[#2D3047]">{order.clients?.name || 'Unknown Client'}</div>
+                    <div className="text-xs text-[#5C6073]">{order.clients?.email || 'No email'}</div>
                   </div>
                 </td>
-                <td className="px-4 py-3">{order.farmers.name}</td>
+                <td className="px-4 py-3">{order.farmers?.name || 'Unknown Farmer'}</td>
                 <td className="px-4 py-3">
                   <div>
-                    <div className="font-medium text-[#2D3047]">{order.produce_type}</div>
+                    <div className="font-medium text-[#2D3047]">{order.produce?.name || 'Unknown'}</div>
                     <div className="text-xs text-[#5C6073]">
-                      {order.expected_quantity}kg - {order.produce_nature}
+                      {order.expected_quantity} {order.unit} - {order.produce_nature}
                     </div>
                   </div>
                 </td>

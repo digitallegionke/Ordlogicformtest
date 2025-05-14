@@ -8,14 +8,42 @@ import StatusBadge from "@/components/admin/status-badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import type { Database } from "@/types/database"
 
-type Farmer = Database["public"]["Tables"]["farmers"]["Row"] & {
+type Farmer = {
+  id: string
+  created_at: string
+  name: string
+  email: string | null
+  phone_number: string
+  address: string | null
+  status: string
   delivery_schedules: Array<{
     id: string
     status: string
     scheduled_delivery_date: string
-    produce_type: string
+    produce_id: string
+    produce: {
+      id: string
+      name: string
+      category: string
+      unit: string
+      description: string | null
+    }
     expected_quantity: number
+    unit: string
   }>
+}
+
+// Helper function to convert search params to URLSearchParams compatible object
+function convertSearchParams(params: { [key: string]: string | string[] | undefined }) {
+  const result: Record<string, string> = {}
+  Object.entries(params).forEach(([key, value]) => {
+    if (typeof value === 'string') {
+      result[key] = value
+    } else if (Array.isArray(value)) {
+      result[key] = value.join(',')
+    }
+  })
+  return result
 }
 
 export default async function FarmersPage({
@@ -37,13 +65,23 @@ export default async function FarmersPage({
     name,
     email,
     phone_number,
+    address,
+    status,
     created_at,
-    delivery_schedules (
+    delivery_schedules!inner (
       id,
       status,
       scheduled_delivery_date,
-      produce_type,
-      expected_quantity
+      produce_id,
+      produce!inner (
+        id,
+        name,
+        category,
+        unit,
+        description
+      ),
+      expected_quantity,
+      unit
     )
   `,
     { count: "exact" }
@@ -51,6 +89,10 @@ export default async function FarmersPage({
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
+  }
+
+  if (tab !== 'all') {
+    query = query.eq('status', tab)
   }
 
   // Apply pagination
@@ -97,7 +139,9 @@ export default async function FarmersPage({
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href={`/admin/farmers?${new URLSearchParams(searchParams)}`}>
+            <Link href={`/admin/farmers?${new URLSearchParams(convertSearchParams({ 
+              ...Object.fromEntries(Object.entries(searchParams).filter(([key]) => key !== "page"))
+            }))}`}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Link>
@@ -134,34 +178,50 @@ export default async function FarmersPage({
       <Tabs defaultValue={tab} className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger asChild value="all" className="flex-1 max-w-[200px]">
-            <Link href={`/admin/farmers?${new URLSearchParams({ ...Object.fromEntries(Object.entries(searchParams)), tab: "all" })}`}>
+            <Link href={`/admin/farmers?${new URLSearchParams(convertSearchParams({
+              ...Object.fromEntries(Object.entries(searchParams).filter(([key]) => key !== "tab")),
+              tab: "all"
+            }))}`}>
               All Farmers
             </Link>
           </TabsTrigger>
           <TabsTrigger asChild value="active" className="flex-1 max-w-[200px]">
-            <Link href={`/admin/farmers?${new URLSearchParams({ ...Object.fromEntries(Object.entries(searchParams)), tab: "active" })}`}>
+            <Link href={`/admin/farmers?${new URLSearchParams(convertSearchParams({
+              ...Object.fromEntries(Object.entries(searchParams).filter(([key]) => key !== "tab")),
+              tab: "active"
+            }))}`}>
               Active
             </Link>
           </TabsTrigger>
           <TabsTrigger asChild value="inactive" className="flex-1 max-w-[200px]">
-            <Link href={`/admin/farmers?${new URLSearchParams({ ...Object.fromEntries(Object.entries(searchParams)), tab: "inactive" })}`}>
+            <Link href={`/admin/farmers?${new URLSearchParams(convertSearchParams({
+              ...Object.fromEntries(Object.entries(searchParams).filter(([key]) => key !== "tab")),
+              tab: "inactive"
+            }))}`}>
               Inactive
             </Link>
           </TabsTrigger>
         </TabsList>
 
         <div className="mt-6 grid gap-6">
-          {farmers?.map((farmer: Farmer) => {
-            const stats = calculateFarmerStats(farmer)
+          {farmers?.map((farmer: any) => {
+            const typedFarmer: Farmer = {
+              ...farmer,
+              delivery_schedules: farmer.delivery_schedules.map((schedule: any) => ({
+                ...schedule,
+                produce: schedule.produce
+              }))
+            }
+            const stats = calculateFarmerStats(typedFarmer)
             return (
-              <Card key={farmer.id}>
+              <Card key={typedFarmer.id}>
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-medium text-[#2D3047]">{farmer.name}</h3>
-                      <p className="text-[#5C6073]">{farmer.email}</p>
-                      {farmer.phone_number && (
-                        <p className="text-sm text-[#5C6073]">{farmer.phone_number}</p>
+                      <h3 className="text-lg font-medium text-[#2D3047]">{typedFarmer.name}</h3>
+                      <p className="text-[#5C6073]">{typedFarmer.email}</p>
+                      {typedFarmer.phone_number && (
+                        <p className="text-sm text-[#5C6073]">{typedFarmer.phone_number}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-4">
@@ -180,16 +240,16 @@ export default async function FarmersPage({
                         </p>
                       </div>
                       <Button asChild variant="outline">
-                        <Link href={`/admin/farmers/${farmer.id}`}>View Details</Link>
+                        <Link href={`/admin/farmers/${typedFarmer.id}`}>View Details</Link>
                       </Button>
                     </div>
                   </div>
 
-                  {farmer.delivery_schedules.length > 0 && (
+                  {typedFarmer.delivery_schedules.length > 0 && (
                     <div className="mt-6">
                       <h4 className="text-sm font-medium text-[#5C6073] mb-3">Recent Deliveries</h4>
                       <div className="grid gap-2">
-                        {farmer.delivery_schedules
+                        {typedFarmer.delivery_schedules
                           .sort(
                             (a, b) =>
                               new Date(b.scheduled_delivery_date).getTime() -
@@ -203,15 +263,17 @@ export default async function FarmersPage({
                             >
                               <div className="flex items-center gap-3">
                                 <StatusBadge status={delivery.status} />
-                                <span className="text-sm text-[#2D3047]">
-                                  {new Date(delivery.scheduled_delivery_date).toLocaleDateString()}
-                                </span>
-                                <span className="text-sm text-[#5C6073]">
-                                  {delivery.produce_type} ({delivery.expected_quantity}kg)
-                                </span>
+                                <div>
+                                  <div className="font-medium text-[#2D3047]">
+                                    {delivery.produce.name}
+                                  </div>
+                                  <div className="text-xs text-[#5C6073]">
+                                    {delivery.expected_quantity} {delivery.unit} - {new Date(delivery.scheduled_delivery_date).toLocaleDateString()}
+                                  </div>
+                                </div>
                               </div>
                               <Button asChild variant="ghost" size="sm">
-                                <Link href={`/admin/delivery-schedules/${delivery.id}`}>View Details</Link>
+                                <Link href={`/admin/orders/${delivery.id}`}>View Order</Link>
                               </Button>
                             </div>
                           ))}
@@ -234,12 +296,10 @@ export default async function FarmersPage({
               {page > 1 && (
                 <Button asChild variant="outline">
                   <Link
-                    href={`/admin/farmers?${new URLSearchParams({
-                      ...Object.fromEntries(
-                        Object.entries(searchParams).filter(([key]) => key !== "page")
-                      ),
+                    href={`/admin/farmers?${new URLSearchParams(convertSearchParams({
+                      ...Object.fromEntries(Object.entries(searchParams).filter(([key]) => key !== "page")),
                       page: (page - 1).toString(),
-                    })}`}
+                    }))}`}
                   >
                     Previous
                   </Link>
@@ -248,12 +308,10 @@ export default async function FarmersPage({
               {page < totalPages && (
                 <Button asChild variant="outline">
                   <Link
-                    href={`/admin/farmers?${new URLSearchParams({
-                      ...Object.fromEntries(
-                        Object.entries(searchParams).filter(([key]) => key !== "page")
-                      ),
+                    href={`/admin/farmers?${new URLSearchParams(convertSearchParams({
+                      ...Object.fromEntries(Object.entries(searchParams).filter(([key]) => key !== "page")),
                       page: (page + 1).toString(),
-                    })}`}
+                    }))}`}
                   >
                     Next
                   </Link>
