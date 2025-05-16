@@ -40,6 +40,13 @@ export default function NewFarmerPage() {
         throw new Error("Please enter a valid email address")
       }
 
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error("You must be authenticated to perform this action")
+      }
+
+
       const { data, error } = await supabase.from("farmers").insert([
         {
           name: formData.name,
