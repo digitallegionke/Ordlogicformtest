@@ -63,7 +63,8 @@ export default async function OrdersPage({
         created_at,
         scheduled_delivery_date,
         produce_id,
-        produce:produce(*),
+        produce:produce!delivery_schedules_produce_id_fkey(*),
+        
         produce_type,
         produce_nature,
         expected_quantity,

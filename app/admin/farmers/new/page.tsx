@@ -46,7 +46,7 @@ export default function NewFarmerPage() {
           email: formData.email,
           phone_number: formData.phone_number,
           address: formData.address,
-          is_active: formData.is_active
+          status: formData.is_active
         },
       ]).select()
 
